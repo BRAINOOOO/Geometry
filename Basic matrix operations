@@ -1,0 +1,51 @@
+matrix matrixaddition(matrix a,matrix b)
+{
+    
+    matrix res=Zero(sz(a),sz(a[0]));
+    
+    for(int i=0;i<sz(a);i++)
+        for(int j=0;j<sz(a[0]);j++)
+         res[i][j]=a[i][j]+b[i][j];
+    
+    return res;
+}
+--------------------------------------------------------------------------------------------------------------
+// addition of identity matrix to a matrix 
+// like matrix + 1
+
+matrix addIdentity(matrix m)
+{
+    matrix ret=m;
+    
+    for(int i=0;i<sz(m);i++)
+        ret[i][i]+=1;
+    
+    return ret;
+}
+----------------------------------------------------------------------------------------------------------------
+// matrix multiplication 
+// there are rules to do so
+// 1- the first matrix columns must be equal to second matrix rows
+// the resultant matrix will have the first matrix rows as rows and second matrix column as a column
+// cell (i,j) will be the sum of mutiplication of first matrix ith row and second matrix jth column
+// O( n^3 )
+// there are 2 tricks to optimaize the complexity
+// 1- if a most of it zeros so do if condition before the last loop to check if ( a[i][k] ==0) continue;
+//    and if b most of it zeros so swap the last 2 loops and do the check but on b[k][j].
+matrix multiplication(matrix a,matrix b)
+{
+    matrix res=Zero(sz(a),sz(b[0]));
+    
+    for(int i=0;i<sz(a);i++)
+    {
+        for(int k=0;k<sz(a[0]);k++)
+        {
+            for(int j=0;j<sz(b[0]);j++)
+             res[i][j]+= a[i][k]*b[k][j];
+            
+        }
+    }
+    
+    return res;
+}
+--------------------------------------------------------------------------------------------------------------------
