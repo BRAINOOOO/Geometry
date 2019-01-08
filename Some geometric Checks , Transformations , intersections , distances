@@ -1,0 +1,244 @@
+/*
+
+- there is complex library at c++ in it
+1- complex< double > point , which is  a complex point = a+bi  a and b here are doubles
+   you can get point.real() which is x and point.img() which is y.
+2-conj( point ) returns the conject of a point.
+3- there is pow for complex pow(point,Power ) 
+4-exp( point ) means e^(point) = e^(a+bi)
+5- point is a vector from orgin.
+
+-------------------------------------------------------------------------------------
+- Some Transformations
+
+1- rotation
+  - from about orgin : point can be expressed as r*e^(ceta i), so if you want to rotate it with alpha and its orginal angle is ceta so
+  you want the final angle to be ceta+alpha .
+CODE
+#define    rotate0( a,ang)    ((a)*exp( point(0,ang) )) where a is the point its orginally at and ang is ceta + alpha   ( about orgin )
+#define    rotateA(about,p,ang)   (rotate0(vec(about,p),ang)+about)   ( about another point )
+
+2- Reflection 
+   -#define     reflectionA(m,v,p0)     (conj( (vec(p0,v))/(vec(p0,m)) ) * (vec(p0,m)) ) + p0   ( there is a prove but not here )
+   where m is the end point of a vector you want to reflect about
+         p0 is the start point of the vector you want to reflect about
+         v is the vector you want to reflect
+----------------------------------------------------------------------------------------
+Some Geometric checks
+// check if the  three points collinear or not
+bool isCollinear(point a, point b, point c) 
+{	
+	return fabs( cp(b-a, c-a) ) < EPS;	
+}
+Eps is very small
+----------------------------------------------------------------------------------------
+// if you have a line ab and point c and you want to know if point c is above line or below if or on it
+
+bool ispointupordown(point a,point b,point c)                                                                 b
+{                                                     /                                                  \    |  /
+    if( cp(vec(a,c),vec(a,b)) > 0)                   /                                                    \   | /   this is <0
+        // up                                       /   this angle is >0                                    \ |/
+    else if(cp(vec(a,c),vec(a,b))<0)                a-----------b     this if its == 0                        a
+      // down                                       \                                                this is >0
+    else if(cp(vec(a,c),vec(a,b))==0)                \   this is <0 
+      // on                                           \
+}
+------------------------------------------------------------------------------------------
+to know if the point p2 on the ray p0p1 or not
+
+bool isPointOnRay(point p0, point p1, point p2) 
+{
+    if(length(p2-p0) < EPS) return true;
+    return same( normalize(p1-p0), normalize(p2-p0) );
+}
+
+Another way
+
+bool isPointOnRay(point a, point b, point c) {	// not tested?
+    if(!isCollinear(a, b, c))
+    	return false;
+    return dcmp(dp(b-a, c-a), 0) == 1;
+}
+--------------------------------------------------------------------------------------
+to know if point c on segment ab or not
+
+bool isPointOnSegment(point a, point b, point c) 
+{
+	return isPointOnRay(a, b, c) && isPointOnRay(b, a, c);
+}
+Another way
+bool isPointOnSegment(point a, point b, point c)
+{
+	double acb = length(a-b), ac = length(a-c), cb = length(b-c);
+	return dcmp(acb-(ac+cb), 0) == 0;
+}
+
+-------------------------------------------------------------------------------------
+distance of point p2 to line p0-p1 strightline distance
+// this is if the point p2 lies in the range of of line p0-p1 so there is a prependicular distance.
+double distToLine( point p0, point p1, point p2 ) 
+{
+	return fabs(cp(p1-p0, p2-p0)/length(p0-p1));      // area = 0.5*b*h
+}
+-------------------------------------------------------------------------------------
+//distance from point p2 to segment p0-p1
+// its the min distance prependicular if it can be
+double distToSegment( point p0, point p1, point p2 ) 
+{
+	double d1, d2;
+	point v1 = p1-p0, v2 = p2-p0;
+	if( (d1 = dp(v1, v2) ) <= 0)	return length(p2-p0);   
+	if( (d2 = dp(v1, v1) ) <= d1)	return length(p2-p1);
+	double t = d1/d2;
+  
+	return length(p2 - (p0 + v1*t) );
+}
+---------------------------------------------------------------------------------------
+getting the point of intersection of two segments ab and cd 
+But first do the intersect test
+bool intersecttest (point p1, point p2, point p3, point p4) {
+    // special case handling if a segment is just a point
+    bool x = (p1 == p2), y = (p3==p4);
+    if(x && y)  return p1 == p3;
+    if(x)   return ccw(p3, p4, p1) == 0;
+    if(y)   return ccw(p1, p2, p3) == 0;
+
+    return  ccw(p1, p2, p3) * ccw(p1, p2, p4) <= 0  &&
+        ccw(p3, p4, p1) * ccw(p3, p4, p2) <= 0;
+  }
+----------------------------------------------------------------------------------------------------------------------------------------
+bool intersectSegments(point a, point b, point c, point d, point & intersect) 
+{
+  double d1 = cp(a - b, d - c), d2 = cp(a - c, d - c), d3 = cp(a - b, a - c);
+  if (fabs(d1) < EPS)
+    return false;  // Parllel || identical
+
+  double t1 = d2 / d1, t2 = d3 / d1;
+  intersect = a + (b - a) * t1;
+
+  if (t1<-EPS||t2 < -EPS || t2 > 1 + EPS)
+    return false;                //here ab is ray, cd is segment ... change to whatever
+                                 // this check is to grantee that the point of intersection lies in ab and cd 
+  return true;
+}
+
+if you want the vector ab to be unlimited from the positive side which means that it may exceed its length don't check for t1>1+EPS
+and if you want the vector ab to be unlimited from the negative side don't check for t1<-EPS .
+and the same for t2.
+
+----------------------------------------------------------------------------------------------------------------------------------------
+// Where is c relative to segment a-b?
+// ccw = +1 => angle > 0 or collinear after p1
+// cw = -1 => angle < 0 or collinear after p0
+// Undefined = 0 => Collinar in range [a, b]. Be careful here
+
+int ccw(point a, point b, point c) {
+  point v1(b - a), v2(c - a);
+  double t = cp(v1, v2);
+
+  if (t > +EPS)
+	return +1;
+  if (t < -EPS)
+	return -1;
+  if (v1.X * v2.X < -EPS || v1.Y * v2.Y < -EPS)
+	return -1;
+  if (norm(v1) < norm(v2) - EPS)
+	return +1;
+  return 0;
+}
+
+-------------------------------------------------------------------------------------------------------
+The angle between two vectors can be obtained by
+1- dot product
+dp( A,B)= |A|*|B|*cos( theta ) this theta is the angle between them not angle from first to second
+2-Cross product 
+cp(A,B)= |A|*|B|*sin( theta ) this theta is the angle from first vector(A) to second vector(B)
+
+But Take Care   -1 <= cos(angle) <=1 so you have to fix angle before using acos() function to not return nan
+
+CODE
+----
+
+double fixangle(double A)
+{
+    return (A>1 ? 1: (A<-1 ? -1: A));
+}
+
+double angle0(point a,point O,point c)   // point O is the point from it vector a goes and vector c goes
+{
+   point v1=vec(O,a); point v2=vec(O,c);
+   return acos(fixangle(dp(v1,v2)/length(v1)/length(v2)));   
+}
+----------------------------------------------------------------------------------------------------------------------------------------
+Getting the Number of integer points thruogh a Stright Line.
+-solution
+let the stright line be AB where A(x1,y2) ,B(x2,y2) then get g= gcd( (x2-x1),(y2-y1) ) then g is the number of integer points on a line.
+
+-Application 
+If you need to get the distance between two cells on a grid its equal to the (x2-x1)+(y2-y1)-g.
+----------------------------------------------------------------------------------------------------------------------------------------
+// function to check if three sider
+// form a triangle or not
+bool checkValidity(int a, int b, int c)
+{
+    // check condition
+    if (a + b <= c || a + c <= b || b + c <= a)
+        return false;
+    else
+        return true;
+}
+ 
+// Driver function
+int main()
+{
+    int a = 7, b = 10, c = 5;
+     
+    if (checkValidity(a, b, c))
+        cout << "Valid";
+    else
+        cout << "Invalid";    
+}
+----------------------------------------------------------------------------------------------------------------------------------------
+Cosine Law
+c^2 = a^2 + b^2 - 2*a*b*Cos(C)
+----------------------------------------------------------------------------------------------------------------------------------------
+Intersection between multiple segments
+1- get the max start and the min end.
+2- the intersection = min end - max start +1.
+----------------------------------------------------------------------------------------------------------------------------------------
+-To know if a set of points form a line or not just every conscutive triple must be collinear.
+bool CanFormAline(vector< point > points)
+{
+    for(int i=2;i<sz(points);i++)
+    {
+        if(!iscollinear(points[i-2],points[i-1],points[i]))
+            return 0;
+    }
+    return 1;
+}
+----------------------------------------------------------------------------------------------------------------------------------------
+-C++ function at complex library to get the theta of a vector to x-axis
+arg( givenvector )
+-abs() with complex get the magnitude of a given vector its absulote length eg vector AB sqrt((A.x-B.x)^2+(A.y-B.y)^2)
+----------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+     
